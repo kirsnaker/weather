@@ -1,38 +1,46 @@
 document.addEventListener('DOMContentLoaded', function() {
     const apiKey = '5c4e560622e3fea9b550f65c9585945b';
     const searchBtn = document.getElementById('search-btn');
-    const locationBtn = document.getElementById('location-btn');
     const cityInput = document.getElementById('city-input');
     const autocompleteItems = document.getElementById('autocomplete-items');
-    
-    // Популярные города России
+
+    // Популярные города России с регионами (для лучшего автодополнения)
     const russianCities = [
-        "Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Казань",
-        "Нижний Новгород", "Челябинск", "Самара", "Омск", "Ростов-на-Дону",
-        "Уфа", "Красноярск", "Пермь", "Воронеж", "Волгоград",
-        "Краснодар", "Саратов", "Тюмень", "Тольятти", "Ижевск"
+        "Москва, Россия",
+        "Санкт-Петербург, Россия",
+        "Новосибирск, Россия",
+        "Екатеринбург, Россия",
+        "Казань, Россия",
+        "Нижний Новгород, Россия",
+        "Челябинск, Россия",
+        "Самара, Россия",
+        "Омск, Россия",
+        "Ростов-на-Дону, Россия",
+        "Уфа, Россия",
+        "Красноярск, Россия",
+        "Пермь, Россия",
+        "Воронеж, Россия",
+        "Волгоград, Россия",
+        "Краснодар, Россия",
+        "Саратов, Россия",
+        "Тюмень, Россия",
+        "Тольятти, Россия",
+        "Ижевск, Россия"
     ];
-    
-    // Инициализация
+
+    // Инициализация приложения
     init();
-    
+
     function init() {
-        // Проверяем геолокацию
-        if (navigator.geolocation) {
-            getLocation();
-        } else {
-            // Если геолокация недоступна, загружаем Москву по умолчанию
-            cityInput.value = 'Москва';
-            searchWeather();
-        }
+        // Запрашиваем геолокацию сразу при загрузке
+        getLocationByGeolocation();
         
         // Настройка обработчиков событий
         setupEventListeners();
     }
-    
+
     function setupEventListeners() {
         searchBtn.addEventListener('click', searchWeather);
-        locationBtn.addEventListener('click', getLocation);
         
         cityInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -41,63 +49,103 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         cityInput.addEventListener('input', function() {
-            const input = cityInput.value.trim();
+            const input = cityInput.value.trim().toLowerCase();
             autocompleteItems.innerHTML = '';
             
             if (input.length > 0) {
                 const filteredCities = russianCities.filter(city => 
-                    city.toLowerCase().includes(input.toLowerCase())
+                    city.toLowerCase().includes(input)
                 );
                 
-                filteredCities.forEach(city => {
+                // Показываем только 5 наиболее релевантных вариантов
+                filteredCities.slice(0, 5).forEach(city => {
                     const item = document.createElement('div');
-                    item.textContent = city;
+                    
+                    // Выделяем совпадающую часть текста
+                    const matchStart = city.toLowerCase().indexOf(input);
+                    const matchEnd = matchStart + input.length;
+                    
+                    item.innerHTML = city.substring(0, matchStart) + 
+                                    '<strong>' + city.substring(matchStart, matchEnd) + '</strong>' + 
+                                    city.substring(matchEnd);
+                    
                     item.addEventListener('click', function() {
-                        cityInput.value = city;
+                        cityInput.value = city.split(',')[0].trim(); // Берем только название города
                         autocompleteItems.innerHTML = '';
                         searchWeather();
                     });
+                    
                     autocompleteItems.appendChild(item);
                 });
+                
+                if (filteredCities.length > 0) {
+                    autocompleteItems.style.display = 'block';
+                }
+            } else {
+                autocompleteItems.style.display = 'none';
             }
         });
         
         // Скрываем автодополнение при клике вне поля
         document.addEventListener('click', function(e) {
             if (e.target !== cityInput) {
-                autocompleteItems.innerHTML = '';
+                autocompleteItems.style.display = 'none';
             }
         });
     }
-    
-    function getLocation() {
+
+    function getLocationByGeolocation() {
+        if (!navigator.geolocation) {
+            setDefaultCity();
+            return;
+        }
+
         navigator.geolocation.getCurrentPosition(
             position => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-                fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}&lang=ru`)
+                
+                // Сначала получаем название города по координатам
+                fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`)
                     .then(response => response.json())
-                    .then(data => {
-                        cityInput.value = data.name;
-                        displayWeather(data);
+                    .then(locationData => {
+                        if (locationData && locationData.length > 0) {
+                            const city = locationData[0].name;
+                            cityInput.value = city;
+                            searchWeather();
+                        } else {
+                            setDefaultCity();
+                        }
                     })
                     .catch(error => {
-                        console.error('Ошибка получения погоды по геолокации:', error);
-                        cityInput.value = 'Москва';
-                        searchWeather();
+                        console.error('Ошибка получения города:', error);
+                        setDefaultCity();
                     });
             },
             error => {
                 console.error('Ошибка геолокации:', error);
-                cityInput.value = 'Москва';
-                searchWeather();
+                setDefaultCity();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
             }
         );
     }
-    
+
+    function setDefaultCity() {
+        cityInput.value = 'Москва';
+        searchWeather();
+    }
+
     function searchWeather() {
         const city = cityInput.value.trim();
         if (city === '') return;
+        
+        // Показываем состояние загрузки
+        document.getElementById('city-name').textContent = `Загружаем данные для ${city}...`;
+        document.getElementById('weather-description').textContent = 'Пожалуйста, подождите...';
         
         fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}&lang=ru`)
             .then(response => {
@@ -110,11 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayWeather(data);
             })
             .catch(error => {
-                alert(error.message);
+                document.getElementById('city-name').textContent = 'Ошибка загрузки';
+                document.getElementById('weather-description').textContent = error.message;
                 console.error('Ошибка:', error);
             });
     }
-    
+
     function displayWeather(data) {
         const cityName = document.getElementById('city-name');
         const temperature = document.getElementById('temperature');
