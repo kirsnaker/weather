@@ -57,34 +57,19 @@ header h1 {
     outline: none;
 }
 
-#search-btn, #location-btn {
-    padding: 0 15px;
+#search-btn {
+    padding: 0 20px;
     background-color: var(--primary-green);
     color: white;
     border: none;
+    border-radius: 0 4px 4px 0;
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#search-btn {
-    border-radius: 0 4px 4px 0;
-}
-
-#location-btn {
-    background-color: var(--light-green);
-    border-radius: 0;
 }
 
 #search-btn:hover {
     background-color: var(--dark-green);
-}
-
-#location-btn:hover {
-    background-color: var(--primary-green);
 }
 
 .autocomplete-items {
@@ -105,10 +90,16 @@ header h1 {
 .autocomplete-items div {
     padding: 10px;
     cursor: pointer;
+    border-bottom: 1px solid #eee;
 }
 
 .autocomplete-items div:hover {
     background-color: #f1f1f1;
+}
+
+.autocomplete-items div strong {
+    color: var(--primary-green);
+    font-weight: 500;
 }
 
 .weather-card {
