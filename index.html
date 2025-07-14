@@ -6,6 +6,7 @@
     <title>Погода.Kirsnake</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -16,8 +17,10 @@
         
         <main>
             <div class="search-box">
-                <input type="text" id="city-input" placeholder="Введите город...">
-                <button id="search-btn">Поиск</button>
+                <input type="text" id="city-input" placeholder="Введите город..." autocomplete="off">
+                <button id="search-btn"><i class="fas fa-search"></i></button>
+                <button id="location-btn" title="Определить местоположение"><i class="fas fa-location-arrow"></i></button>
+                <div class="autocomplete-items" id="autocomplete-items"></div>
             </div>
             
             <div class="weather-card" id="weather-card">
@@ -33,9 +36,11 @@
                         </div>
                     </div>
                 </div>
+                <div class="weather-icon">
+                    <img id="weather-icon" src="" alt="Weather Icon">
+                </div>
             </div>
         </main>
-        
     </div>
     
     <script src="script.js"></script>
